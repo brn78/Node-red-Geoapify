@@ -1,0 +1,8 @@
+
+msg.geoapify = {
+    latitude: 0.0, //(required for reverse method)
+    longitude: 0.0, //(required for reverse method)
+    text: 'roma', //(required for search method)
+    method: 'reverse' || 'search', //(optional parameter, default reverse)
+    format: 'geojson' || 'json' || 'xml'//(optional parameter, default geojson)
+}
