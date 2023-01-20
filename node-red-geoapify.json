@@ -1,0 +1,323 @@
+[
+    {
+        "id": "2420d81fc2c26567",
+        "type": "subflow",
+        "name": "Geoapify",
+        "info": "msg.geoapify = {\r\n    latitude: {number}, (required for reverse method)\r\n    longitude: {number}, (required for reverse method)\r\n    text: {string}, (required for search method)\r\n    method: 'reverse' || 'search', (optional parameter, default reverse)\r\n    format: 'geojson' || 'json' || 'xml' (optional parameter, default geojson)\r\n}",
+        "category": "Geoapify",
+        "in": [
+            {
+                "x": 50,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "cf03346a28664127"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 720,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "0291d1034e504f1e",
+                        "port": 0
+                    },
+                    {
+                        "id": "cf03346a28664127",
+                        "port": 1
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "password",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-key",
+                    "label": {
+                        "en-US": "Password:"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "url",
+                "type": "str",
+                "value": "https://api.geoapify.com/v1",
+                "ui": {
+                    "icon": "font-awesome/fa-link",
+                    "label": {
+                        "en-US": "Url:"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "apikey",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-key",
+                    "label": {
+                        "en-US": "API key:"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "method",
+                "type": "str",
+                "value": "reverse",
+                "ui": {
+                    "icon": "font-awesome/fa-search",
+                    "label": {
+                        "en-US": "Method:"
+                    },
+                    "type": "select",
+                    "opts": {
+                        "opts": [
+                            {
+                                "l": {
+                                    "en-US": "Search"
+                                },
+                                "v": "search"
+                            },
+                            {
+                                "l": {
+                                    "en-US": "Reverse"
+                                },
+                                "v": "reverse"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "format",
+                "type": "str",
+                "value": "geojson",
+                "ui": {
+                    "icon": "font-awesome/fa-sign-out",
+                    "label": {
+                        "en-US": "Format:"
+                    },
+                    "type": "select",
+                    "opts": {
+                        "opts": [
+                            {
+                                "l": {
+                                    "en-US": "GEOJSON"
+                                },
+                                "v": "geojson"
+                            },
+                            {
+                                "l": {
+                                    "en-US": "JSON"
+                                },
+                                "v": "json"
+                            },
+                            {
+                                "l": {
+                                    "en-US": "XML"
+                                },
+                                "v": "xml"
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "meta": {
+            "module": "node-red-geoapify",
+            "version": "2.0.0",
+            "author": "Bruno Leonardi <b.leonardi78@gmail.com>",
+            "desc": "Geoapify",
+            "keywords": "geo, geocoding, location, geolocation",
+            "license": "MIT"
+        },
+        "color": "#FFCC66",
+        "icon": "node-red/white-globe.svg",
+        "status": {
+            "x": 720,
+            "y": 140,
+            "wires": [
+                {
+                    "id": "7e0bae6e97e41ef7",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "cf03346a28664127",
+        "type": "function",
+        "z": "2420d81fc2c26567",
+        "name": "Geoapify",
+        "func": "//https://apidocs.geoapify.com/docs/geocoding/forward-geocoding/#api\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\n/** @type {string} Url di default*/\nvar geoapify_url = env.get(\"url\").trim()\nif (geoapify_url == '') geoapify_url = 'https://api.geoapify.com/v1'\nif (!geoapify_url.endsWith('/')) geoapify_url += '/'\n\n/** @type {string} Metodo di richiesta*/\nvar geoapify_method = env.get(\"method\")\n\n/** @type {string} Formato di output*/\nvar geoapify_format = env.get(\"format\")\n\n/** @type {string} Chiave autorizzazione API*/\nvar geoapify_apikey = env.get(\"apikey\").trim()\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\n/** @type {number} Coordinata, latitudine*/\nvar latitude = null\n\n/** @type {number} Coordinata, longitudine*/\nvar longitude = null\n\n/** @type {string} Luogo da ricercare*/\nvar text = null\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\nif (msg.geoapify) {\n    latitude = msg.geoapify.latitude || null\n    longitude = msg.geoapify.longitude || null\n    text = msg.geoapify.text || null\n\n    if (msg.geoapify.method) {\n        if (msg.geoapify.method == 'search' || msg.geoapify.method == 'reverse') {\n            geoapify_method = msg.geoapify.method\n        } else {\n            msg.geoapify.method = geoapify_method\n        }        \n    }\n\n    if (msg.geoapify.format) {\n        if (msg.geoapify.format == 'geojson' || msg.geoapify.format == 'json' || msg.geoapify.format == 'xml') {\n            geoapify_format = msg.geoapify.format\n        } else {\n            msg.geoapify.format = geoapify_format\n        }\n    }\n} else {\n    node.status({ fill: \"yellow\", shape: \"dot\", text: \"Geoapify message not exists\" })\n    return [null, msg]\n}\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\nif (geoapify_method == 'search') {\n    if (text == null) {\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Geoapify text is missing\" })\n        return [null, msg]\n    } else {\n        node.status({ fill: \"green\", shape: \"ring\", text: \"Geoapify search request sending...\" })\n    }\n\n    msg.original_msg_backup = RED.util.cloneMessage(msg)\n    msg.url = `${geoapify_url}geocode/${geoapify_method}?text=${text}&apiKey=${geoapify_apikey}&lang=it&format=${geoapify_format}`\n    msg.method = 'GET'\n    return [msg, null]\n} else {//reverse\n    if (latitude == null || longitude == null) {\n        node.status({ fill: \"red\", shape: \"dot\", text: \"Geoapify latitude or longitude are missing\" })\n        return [null, msg]\n    } else {\n        node.status({ fill: \"green\", shape: \"ring\", text: \"Geoapify reverse request sending...\" })\n    }\n\n    msg.original_msg_backup = RED.util.cloneMessage(msg)\n    msg.url = `${geoapify_url}geocode/${geoapify_method}?lat=${latitude}&lon=${longitude}&apiKey=${geoapify_apikey}&lang=it&format=${geoapify_format}`\n    msg.method = 'GET'\n    return [msg, null]\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\nnode.status({ fill: \"green\", shape: \"ring\", text: \"Initialized...\" })",
+        "finalize": "",
+        "libs": [],
+        "x": 170,
+        "y": 80,
+        "wires": [
+            [
+                "475307907ceb91b1"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "475307907ceb91b1",
+        "type": "http request",
+        "z": "2420d81fc2c26567",
+        "name": "",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 360,
+        "y": 40,
+        "wires": [
+            [
+                "0291d1034e504f1e"
+            ]
+        ]
+    },
+    {
+        "id": "4dc53d29e948d3f4",
+        "type": "status",
+        "z": "2420d81fc2c26567",
+        "name": "",
+        "scope": [
+            "cf03346a28664127",
+            "0291d1034e504f1e",
+            "4d93256be8c8999d"
+        ],
+        "x": 170,
+        "y": 140,
+        "wires": [
+            [
+                "7e0bae6e97e41ef7",
+                "511c0e15670fc7dd"
+            ]
+        ]
+    },
+    {
+        "id": "0291d1034e504f1e",
+        "type": "function",
+        "z": "2420d81fc2c26567",
+        "name": "Response",
+        "func": "//https://myprojects.geoapify.com/\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\n/**\n * @param {Array} results\n */\nfunction Results(results = []) {\n    try {\n        if (msg.payload.features.length === 0) return null\n        var arr = []\n        for (let i = 0; i < results.length; i++) { arr.push(results[i].properties) }\n        return arr\n    } catch (error) {\n        return null\n    }\n}\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\n/** @type {string} Formato di output*/\nconst geoapify_format = msg.geoapify.format || env.get(\"format\")\n\nif (msg.statusCode == 200) {\n    if (geoapify_format == 'xml') {\n        msg.original_msg_backup.geoapify = {}\n        msg.original_msg_backup.geoapify.success = true\n        msg.original_msg_backup.geoapify.format = geoapify_format.toUpperCase()\n        msg.original_msg_backup.geoapify.found = -1\n        msg.original_msg_backup.geoapify.results = msg.payload\n    } else if (geoapify_format == 'json') {\n        msg.original_msg_backup.geoapify = {}\n        msg.original_msg_backup.geoapify.success = true\n        msg.original_msg_backup.geoapify.format = geoapify_format.toUpperCase()\n        msg.original_msg_backup.geoapify.found = msg.payload.results.length\n        msg.original_msg_backup.geoapify.results = msg.payload.results\n    } else { //geojson default\n        let result = Results(msg.payload.features)\n        msg.original_msg_backup.geoapify = {}\n        msg.original_msg_backup.geoapify.success = (result != null)\n        msg.original_msg_backup.geoapify.format = geoapify_format.toUpperCase()\n        msg.original_msg_backup.geoapify.found = (result != null) ? result.length : 0\n        msg.original_msg_backup.geoapify.results = result\n    }\n\n    node.status({ fill: \"green\", shape: \"dot\", text: 'Response OK' })\n} else {\n    msg.original_msg_backup.geoapify = {}\n    msg.original_msg_backup.geoapify.success = false\n    msg.original_msg_backup.geoapify.format = geoapify_format.toUpperCase()\n    msg.original_msg_backup.geoapify.found = 0\n    msg.original_msg_backup.geoapify.results = null\n    node.status({ fill: \"red\", shape: \"dot\", text: 'Response ERROR' })\n}\n\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n/////////////////////////////////////////////////////////////////////////////////////\n\nreturn msg.original_msg_backup",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7e0bae6e97e41ef7",
+        "type": "delay",
+        "z": "2420d81fc2c26567",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "4",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 360,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4d93256be8c8999d",
+        "type": "function",
+        "z": "2420d81fc2c26567",
+        "name": "Reset status",
+        "func": "node.status({ fill: \"green\", shape: \"ring\", text: \"Ready\" })",
+        "outputs": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 190,
+        "wires": []
+    },
+    {
+        "id": "511c0e15670fc7dd",
+        "type": "trigger",
+        "z": "2420d81fc2c26567",
+        "name": "",
+        "op1": "",
+        "op2": "0",
+        "op1type": "nul",
+        "op2type": "str",
+        "duration": "5",
+        "extend": true,
+        "overrideDelay": false,
+        "units": "s",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 1,
+        "x": 350,
+        "y": 190,
+        "wires": [
+            [
+                "4d93256be8c8999d"
+            ]
+        ]
+    },
+    {
+        "id": "705c75bff94d16e3",
+        "type": "subflow:2420d81fc2c26567",
+        "z": "2d04e7883a87cf53",
+        "name": "",
+        "x": 300,
+        "y": 390,
+        "wires": [
+            []
+        ]
+    }
+]
